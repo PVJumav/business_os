@@ -5,9 +5,18 @@ import os
 
 load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_URL = (
+    os.getenv("DATABASE_URL")
+    or os.getenv("POSTGRES_URL")
+    or os.getenv("POSTGRESQL_URL")
+    or os.getenv("DATABASE_PRIVATE_URL")
+    or os.getenv("DATABASE_PUBLIC_URL")
+)
 if not DATABASE_URL:
-    raise RuntimeError("DATABASE_URL is not configured. Set it in .env before starting the API.")
+    raise RuntimeError(
+        "DATABASE_URL is not configured. Set DATABASE_URL to a managed PostgreSQL connection string "
+        "in the backend hosting environment before starting the API."
+    )
 
 engine = create_engine(
     DATABASE_URL,

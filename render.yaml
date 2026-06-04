@@ -7,10 +7,17 @@ services:
     startCommand: python -m backend.core.create_tables && uvicorn backend.main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: DATABASE_URL
-        sync: false
+        fromDatabase:
+          name: business-os-db
+          property: connectionString
       - key: SECRET_KEY
         generateValue: true
       - key: CORS_ORIGINS
         sync: false
       - key: SQL_ECHO
         value: "false"
+
+databases:
+  - name: business-os-db
+    databaseName: business_os
+    user: business_os_user
