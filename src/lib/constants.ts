@@ -21,4 +21,4 @@ export const DEAL_STAGES = [
   "Closed Lost",
 ] as const;
 
-export const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL ?? "").replace(/\/$/, "");
+export const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || "https://lunexao-api.onrender.com").replace(/\/$/, "");
