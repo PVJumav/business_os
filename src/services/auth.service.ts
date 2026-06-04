@@ -9,7 +9,12 @@ export interface RegisterUserPayload {
   email: string;
   password: string;
   full_name: string;
-  role: string;
+  username?: string;
+  role?: string;
+}
+
+export interface GoogleLoginPayload {
+  credential: string;
 }
 
 export interface AuthTokens {
@@ -34,6 +39,14 @@ export const authService = {
 
   async login(credentials: LoginCredentials): Promise<AuthTokens> {
     const tokens = await api.post<AuthTokens>("/api/auth/login", credentials);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("access_token", tokens.access_token);
+    }
+    return tokens;
+  },
+
+  async loginWithGoogle(payload: GoogleLoginPayload): Promise<AuthTokens> {
+    const tokens = await api.post<AuthTokens>("/api/auth/google", payload);
     if (typeof window !== "undefined") {
       localStorage.setItem("access_token", tokens.access_token);
     }
