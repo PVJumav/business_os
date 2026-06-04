@@ -1,0 +1,35 @@
+{
+  "name": "business-os",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "test:system": "node scripts/system-smoke.mjs",
+    "test:frontend": "npm run lint && npm run build",
+    "test:backend": "..\\business-os-completed\\.venv\\Scripts\\python.exe -m compileall backend && ..\\business-os-completed\\.venv\\Scripts\\python.exe -c \"import backend.main; print('backend import ok')\""
+  },
+  "dependencies": {
+    "lucide-react": "^1.14.0",
+    "next": "^16.2.5",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "recharts": "^3.8.1"
+  },
+  "devDependencies": {
+    "@next/swc-wasm-nodejs": "^16.2.5",
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.5",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  },
+  "optionalDependencies": {
+    "@next/swc-win32-x64-msvc": "^16.2.5"
+  }
+}
