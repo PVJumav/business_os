@@ -17,6 +17,7 @@ class AuthUser(Base):
     hashed_password = Column(String(255), nullable=True)
     auth_provider = Column(String(50), default="password", nullable=False)
     google_subject = Column(String(255), unique=True, nullable=True, index=True)
+    github_subject = Column(String(255), unique=True, nullable=True, index=True)
     avatar_url = Column(Text, nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)
 

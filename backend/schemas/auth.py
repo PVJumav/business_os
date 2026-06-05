@@ -23,6 +23,12 @@ class GoogleLoginPayload(BaseModel):
     role: str = Field(default="user", max_length=100)
 
 
+class GithubLoginPayload(BaseModel):
+    code: str = Field(..., min_length=10)
+    redirect_uri: str = Field(..., min_length=10, max_length=500)
+    role: str = Field(default="user", max_length=100)
+
+
 class AuthTokens(BaseModel):
     access_token: str
     token_type: str = "bearer"

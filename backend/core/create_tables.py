@@ -19,6 +19,7 @@ def create_tables():
         connection.execute(text("ALTER TABLE IF EXISTS auth_users ADD COLUMN IF NOT EXISTS username VARCHAR(100)"))
         connection.execute(text("ALTER TABLE IF EXISTS auth_users ADD COLUMN IF NOT EXISTS auth_provider VARCHAR(50) DEFAULT 'password' NOT NULL"))
         connection.execute(text("ALTER TABLE IF EXISTS auth_users ADD COLUMN IF NOT EXISTS google_subject VARCHAR(255)"))
+        connection.execute(text("ALTER TABLE IF EXISTS auth_users ADD COLUMN IF NOT EXISTS github_subject VARCHAR(255)"))
         connection.execute(text("ALTER TABLE IF EXISTS auth_users ADD COLUMN IF NOT EXISTS avatar_url TEXT"))
         connection.execute(text("ALTER TABLE IF EXISTS auth_users ALTER COLUMN hashed_password DROP NOT NULL"))
         connection.execute(text("UPDATE auth_users SET username = lower(split_part(email, '@', 1)) WHERE username IS NULL"))

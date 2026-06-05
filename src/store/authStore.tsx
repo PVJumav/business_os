@@ -10,6 +10,7 @@ export interface AuthState {
   isAuthenticated: boolean;
   login: (credentials: LoginCredentials) => Promise<boolean>;
   loginWithGoogle: (credential: string) => Promise<boolean>;
+  loginWithGithub: (code: string, redirectUri: string) => Promise<boolean>;
   register: (payload: RegisterUserPayload) => Promise<boolean>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -79,14 +80,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const loginWithGithub = useCallback(async (code: string, redirectUri: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      await authService.loginWithGithub({ code, redirect_uri: redirectUri });
+      const me = await authService.getCurrentUser();
+      setUser(me);
+      return true;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "GitHub sign-in failed");
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   const register = useCallback(async (payload: RegisterUserPayload) => {
     setIsLoading(true);
     setError(null);
     try {
       await authService.register(payload);
-      await authService.login({ email: payload.email, password: payload.password });
-      const me = await authService.getCurrentUser();
-      setUser(me);
       return true;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed");
@@ -111,12 +125,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isAuthenticated: Boolean(user),
       login,
       loginWithGoogle,
+      loginWithGithub,
       register,
       logout,
       refreshUser,
       clearError,
     }),
-    [clearError, error, isLoading, login, loginWithGoogle, logout, refreshUser, register, user]
+    [clearError, error, isLoading, login, loginWithGithub, loginWithGoogle, logout, refreshUser, register, user]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

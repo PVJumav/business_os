@@ -7,6 +7,7 @@ import Button from "@/components/ui/Button";
 import { useAuth } from "@/hooks/useAuth";
 
 const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+const githubClientId = process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID;
 
 type GoogleIdentity = {
   accounts?: {
@@ -25,8 +26,9 @@ type GoogleIdentity = {
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, loginWithGoogle, register, error, isLoading, isAuthenticated, clearError } = useAuth();
+  const { login, loginWithGoogle, loginWithGithub, register, error, isLoading, isAuthenticated, clearError } = useAuth();
   const [mode, setMode] = useState<"login" | "register">("login");
+  const [notice, setNotice] = useState<string | null>(null);
   const [form, setForm] = useState({
     email: "",
     password: "",
@@ -38,9 +40,25 @@ export default function LoginPage() {
     if (isAuthenticated) router.replace("/");
   }, [isAuthenticated, router]);
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("github_code") || params.get("code");
+    const state = params.get("state");
+    const expectedState = sessionStorage.getItem("businessos_github_oauth_state");
+    if (!code || !state || state !== expectedState) return;
+
+    sessionStorage.removeItem("businessos_github_oauth_state");
+    window.history.replaceState({}, document.title, window.location.pathname);
+    clearError();
+    loginWithGithub(code, `${window.location.origin}/login`).then((ok) => {
+      if (ok) router.replace("/");
+    });
+  }, [clearError, loginWithGithub, router]);
+
   async function submitLogin(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     clearError();
+    setNotice(null);
     const ok = await login({ email: form.email, password: form.password });
     if (ok) router.replace("/");
   }
@@ -48,18 +66,39 @@ export default function LoginPage() {
   async function submitRegister(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     clearError();
+    setNotice(null);
     const ok = await register({
       full_name: form.full_name,
       username: form.username || undefined,
       email: form.email,
       password: form.password,
     });
-    if (ok) router.replace("/");
+    if (ok) {
+      setMode("login");
+      setNotice("Account created. Sign in with your username or email to continue.");
+      setForm((current) => ({ ...current, password: "" }));
+    }
   }
 
   function switchMode(nextMode: "login" | "register") {
     clearError();
+    setNotice(null);
     setMode(nextMode);
+  }
+
+  function startGithubLogin() {
+    if (!githubClientId || typeof window === "undefined") return;
+    clearError();
+    setNotice(null);
+    const state = crypto.randomUUID();
+    sessionStorage.setItem("businessos_github_oauth_state", state);
+    const params = new URLSearchParams({
+      client_id: githubClientId,
+      redirect_uri: `${window.location.origin}/login`,
+      scope: "read:user user:email",
+      state,
+    });
+    window.location.href = `https://github.com/login/oauth/authorize?${params.toString()}`;
   }
 
   function initializeGoogle() {
@@ -151,6 +190,7 @@ export default function LoginPage() {
             />
           </label>
 
+          {notice && <p className="rounded-xl bg-emerald-50 p-3 text-sm text-emerald-800">{notice}</p>}
           {error && <p className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p>}
 
           <Button type="submit" className="w-full justify-center" disabled={isLoading}>
@@ -162,6 +202,18 @@ export default function LoginPage() {
           <div className="mt-4">
             <div id="google-sign-in" className="flex justify-center" />
           </div>
+        )}
+
+        {mode === "login" && githubClientId && (
+          <Button
+            type="button"
+            variant="secondary"
+            className="mt-3 w-full justify-center"
+            disabled={isLoading}
+            onClick={startGithubLogin}
+          >
+            Sign in with GitHub
+          </Button>
         )}
 
         <p className="mt-5 text-center text-sm text-slate-600">
@@ -178,7 +230,7 @@ export default function LoginPage() {
         <div className="mt-6 rounded-xl bg-slate-50 p-4 text-xs text-slate-500">
           {mode === "login"
             ? "The first registered account becomes the system admin. Later accounts start as standard users."
-            : "After creation, BusinessOS will sign you in automatically and open your workspace."}
+            : "After creation, sign in manually so the session starts from the approved login flow."}
         </div>
       </section>
     </main>

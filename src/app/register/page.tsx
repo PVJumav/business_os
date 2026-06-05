@@ -29,7 +29,7 @@ export default function RegisterPage() {
       email: form.email,
       password: form.password,
     });
-    if (ok) router.replace("/");
+    if (ok) router.replace("/login");
   }
 
   return (
@@ -39,7 +39,7 @@ export default function RegisterPage() {
           <p className="text-sm font-semibold uppercase tracking-wide text-blue-600">BusinessOS</p>
           <h1 className="mt-2 text-3xl font-bold text-slate-950">Create account</h1>
           <p className="mt-2 text-sm text-slate-500">
-            Register with a username and password. The first account becomes admin.
+            Register with a username and password. After creating the account, sign in manually.
           </p>
         </div>
 

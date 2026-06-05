@@ -17,6 +17,11 @@ export interface GoogleLoginPayload {
   credential: string;
 }
 
+export interface GithubLoginPayload {
+  code: string;
+  redirect_uri: string;
+}
+
 export interface AuthTokens {
   access_token: string;
   token_type: string;
@@ -47,6 +52,14 @@ export const authService = {
 
   async loginWithGoogle(payload: GoogleLoginPayload): Promise<AuthTokens> {
     const tokens = await api.post<AuthTokens>("/api/auth/google", payload);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("access_token", tokens.access_token);
+    }
+    return tokens;
+  },
+
+  async loginWithGithub(payload: GithubLoginPayload): Promise<AuthTokens> {
+    const tokens = await api.post<AuthTokens>("/api/auth/github", payload);
     if (typeof window !== "undefined") {
       localStorage.setItem("access_token", tokens.access_token);
     }
