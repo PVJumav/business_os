@@ -4,9 +4,8 @@ interface RequestOptions extends RequestInit {
   params?: Record<string, string | number>;
 }
 
-async function request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
-  const { params, ...fetchOptions } = options;
-
+export function apiUrl(endpoint: string, params?: Record<string, string | number>) {
+  if (/^https?:\/\//i.test(endpoint)) return endpoint;
   let url = `${API_BASE_URL}${endpoint}`;
   if (params) {
     const qs = new URLSearchParams(
@@ -14,6 +13,40 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
     );
     url += `?${qs.toString()}`;
   }
+  return url;
+}
+
+export function authHeaders(extra?: HeadersInit): HeadersInit {
+  const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+  return {
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...extra,
+  };
+}
+
+export function errorMessageFromPayload(payload: unknown, fallback = "Request failed") {
+  if (!payload || typeof payload !== "object") return fallback;
+  const detail = (payload as { detail?: unknown; message?: unknown; error?: unknown }).detail
+    ?? (payload as { message?: unknown }).message
+    ?? (payload as { error?: unknown }).error;
+  if (typeof detail === "string") return detail;
+  if (Array.isArray(detail)) {
+    return detail
+      .map((item) => {
+        if (typeof item === "string") return item;
+        if (item && typeof item === "object" && "msg" in item) return String((item as { msg: unknown }).msg);
+        return JSON.stringify(item);
+      })
+      .join("; ");
+  }
+  if (detail && typeof detail === "object") return JSON.stringify(detail);
+  return fallback;
+}
+
+async function request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
+  const { params, ...fetchOptions } = options;
+
+  const url = apiUrl(endpoint, params);
 
   const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
 
@@ -37,7 +70,7 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
 
   if (!res.ok) {
     const error = await res.json().catch(() => ({ detail: res.statusText }));
-    throw new Error(error.detail ?? "Request failed");
+    throw new Error(errorMessageFromPayload(error, res.statusText || "Request failed"));
   }
 
   if (res.status === 204) {
@@ -73,4 +106,17 @@ export const api = {
 
   delete: <T>(endpoint: string, options?: RequestOptions) =>
     request<T>(endpoint, { method: "DELETE", ...options }),
+
+  upload: async <T>(endpoint: string, body: FormData, params?: Record<string, string | number>) => {
+    const res = await fetchWithRetry(apiUrl(endpoint, params), {
+      method: "POST",
+      headers: authHeaders(),
+      body,
+    });
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({ detail: res.statusText }));
+      throw new Error(errorMessageFromPayload(error, res.statusText || "Upload failed"));
+    }
+    return res.json() as Promise<T>;
+  },
 };

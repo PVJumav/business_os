@@ -4,8 +4,7 @@ import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { ArrowRight, CheckCircle2, Download, RefreshCw, Search, ShieldCheck, Trash2, Upload, UserPlus, Users, X } from "lucide-react";
 import Button from "@/components/ui/Button";
-import { API_BASE_URL } from "@/lib/constants";
-import { api } from "@/services/api";
+import { api, apiUrl, authHeaders, errorMessageFromPayload } from "@/services/api";
 import { useGlobalSearch } from "@/store/searchStore";
 
 type Employee = {
@@ -775,16 +774,7 @@ export default function EmployeeWorkspace() {
     if (!selectedEmployee || !photoFile) return;
     const formData = new FormData();
     formData.append("file", photoFile);
-    const token = localStorage.getItem("access_token");
-    const response = await fetch(`${API_BASE_URL}/api/hrm/employees/${selectedEmployee.id}/photo`, {
-      method: "POST",
-      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-      body: formData,
-    });
-    if (!response.ok) {
-      const payload = await response.json().catch(() => ({ detail: "Photo upload failed" }));
-      throw new Error(typeof payload.detail === "string" ? payload.detail : "Photo upload failed");
-    }
+    await api.upload(`/api/hrm/employees/${selectedEmployee.id}/photo`, formData);
     setPhotoFile(null);
     setActivationMessage("Employee photo uploaded.");
     await refreshSelectedProfile();
@@ -846,18 +836,11 @@ export default function EmployeeWorkspace() {
     try {
       const formData = new FormData();
       formData.append("file", documentFile);
-      const token = localStorage.getItem("access_token");
-      const params = new URLSearchParams({ document_type: documentType });
-      if (documentExpiry) params.set("expiry_date", documentExpiry);
-      const response = await fetch(`${API_BASE_URL}/api/hrm/employees/${selectedEmployee.id}/documents?${params.toString()}`, {
-        method: "POST",
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-        body: formData,
-      });
-      if (!response.ok) {
-        const message = await response.text();
-        throw new Error(message || "Document upload failed");
-      }
+      await api.upload(
+        `/api/hrm/employees/${selectedEmployee.id}/documents`,
+        formData,
+        { document_type: documentType, ...(documentExpiry ? { expiry_date: documentExpiry } : {}) }
+      );
       setDocumentFile(null);
       setActivationMessage("Employee document uploaded.");
       await refreshSelectedProfile();
@@ -878,11 +861,13 @@ export default function EmployeeWorkspace() {
 
   async function downloadEmployeeDocument(documentId: string) {
     if (!selectedEmployee) return;
-    const token = localStorage.getItem("access_token");
-    const response = await fetch(`${API_BASE_URL}/api/hrm/employees/${selectedEmployee.id}/documents/${documentId}/download`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    const response = await fetch(apiUrl(`/api/hrm/employees/${selectedEmployee.id}/documents/${documentId}/download`), {
+      headers: authHeaders(),
     });
-    if (!response.ok) throw new Error("Document download failed");
+    if (!response.ok) {
+      const payload = await response.json().catch(() => ({ detail: "Document download failed" }));
+      throw new Error(errorMessageFromPayload(payload, "Document download failed"));
+    }
     const blob = await response.blob();
     const url = URL.createObjectURL(blob);
     window.open(url, "_blank", "noopener,noreferrer");
@@ -932,7 +917,7 @@ export default function EmployeeWorkspace() {
       import_as_draft: String(importAsDraft),
       rollback_on_error: String(rollbackOnError),
     });
-    return `${API_BASE_URL}/api/hrm/employees/import${kind === "validate" ? "/validate" : ""}?${params.toString()}`;
+    return apiUrl(`/api/hrm/employees/import${kind === "validate" ? "/validate" : ""}`) + `?${params.toString()}`;
   }
 
   async function uploadEmployeeImport(event: ChangeEvent<HTMLInputElement>, kind: "import" | "validate") {
@@ -944,11 +929,10 @@ export default function EmployeeWorkspace() {
     setLastBatch(null);
     const formData = new FormData();
     formData.append("file", file);
-    const token = localStorage.getItem("access_token");
     try {
       const response = await fetch(employeeImportUrl(kind), {
         method: "POST",
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        headers: authHeaders(),
         body: formData,
       });
       if (!response.ok) {
@@ -1191,7 +1175,7 @@ export default function EmployeeWorkspace() {
               Bulk Activate
             </Button>
             <a
-              href={`${API_BASE_URL}/api/hrm/employees/import/template`}
+              href={apiUrl("/api/hrm/employees/import/template")}
               className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
             >
               <Download size={16} />
@@ -1389,7 +1373,7 @@ export default function EmployeeWorkspace() {
                       <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white text-xl font-bold text-slate-500">
                         {(profileBundle?.active_photo?.file_url || selectedEmployee.photo_url) ? (
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img src={`${API_BASE_URL}${String(profileBundle?.active_photo?.file_url || selectedEmployee.photo_url)}`} alt={fullName(selectedEmployee)} className="h-full w-full object-cover" />
+                          <img src={apiUrl(String(profileBundle?.active_photo?.file_url || selectedEmployee.photo_url))} alt={fullName(selectedEmployee)} className="h-full w-full object-cover" />
                         ) : (
                           fullName(selectedEmployee).slice(0, 2).toUpperCase()
                         )}

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { CalendarDays, CheckCircle2, FileDown, RefreshCw, Send, Settings } from "lucide-react";
-import { api } from "@/services/api";
+import { api, apiUrl, authHeaders, errorMessageFromPayload } from "@/services/api";
 import HRMEnterpriseModule from "@/components/hrm/HRMEnterpriseModule";
 
 type CellValue = string | number | boolean | null | undefined | Record<string, unknown> | unknown[];
@@ -148,16 +148,18 @@ export default function LeaveManagementWorkspace() {
   async function exportReport() {
     setError(null);
     try {
-      const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
-      const response = await fetch("/api/hrm/leave/reports/export", {
+      const response = await fetch(apiUrl("/api/hrm/leave/reports/export"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          ...authHeaders(),
         },
         body: JSON.stringify({ report_type: "leave", export_format: "csv" }),
       });
-      if (!response.ok) throw new Error("Report export failed");
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({ detail: "Report export failed" }));
+        throw new Error(errorMessageFromPayload(payload, "Report export failed"));
+      }
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");

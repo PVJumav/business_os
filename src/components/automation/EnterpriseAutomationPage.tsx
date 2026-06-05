@@ -19,7 +19,7 @@ import Button from "@/components/ui/Button";
 import { automationViews, type AutomationField, type AutomationViewConfig } from "@/lib/automationConfigs";
 import { api } from "@/services/api";
 
-type RecordValue = string | number | boolean | null | undefined;
+type RecordValue = string | number | boolean | null | undefined | Record<string, unknown> | unknown[];
 type DataRecord = Record<string, RecordValue> & { id?: string };
 
 type Dashboard = {
@@ -43,7 +43,25 @@ function emptyForm(config: AutomationViewConfig) {
 function formatValue(value: RecordValue) {
   if (value === null || value === undefined || value === "") return "-";
   if (typeof value === "boolean") return value ? "Yes" : "No";
+  if (Array.isArray(value) || typeof value === "object") return JSON.stringify(value);
   return String(value).replaceAll("_", " ");
+}
+
+function normalizeRecord(value: unknown): DataRecord {
+  if (value && typeof value === "object" && !Array.isArray(value)) return value as DataRecord;
+  return {};
+}
+
+function normalizeRecordList(value: unknown): DataRecord[] {
+  if (Array.isArray(value)) return value.map(normalizeRecord);
+  if (value && typeof value === "object") {
+    const objectValue = value as Record<string, unknown>;
+    for (const key of ["records", "items", "data", "results", "rows"]) {
+      if (Array.isArray(objectValue[key])) return (objectValue[key] as unknown[]).map(normalizeRecord);
+    }
+    if (objectValue.id) return [normalizeRecord(objectValue)];
+  }
+  return [];
 }
 
 function statusTone(value: RecordValue) {
@@ -108,10 +126,10 @@ export default function EnterpriseAutomationPage({ viewKey }: { viewKey: keyof t
     setError(null);
     try {
       const [items, stats] = await Promise.all([
-        api.get<DataRecord[]>(config.endpoint),
+        api.get<unknown>(config.endpoint),
         api.get<Dashboard>("/api/automation/dashboard").catch(() => null),
       ]);
-      setRecords(items);
+      setRecords(normalizeRecordList(items));
       setDashboard(stats);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load enterprise automation records");
@@ -150,7 +168,7 @@ export default function EnterpriseAutomationPage({ viewKey }: { viewKey: keyof t
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const payload = normalizePayload(form, config.fields);
-    const saved = await api.post<DataRecord>(config.endpoint, payload);
+    const saved = normalizeRecord(await api.post<unknown>(config.endpoint, payload));
     setRecords((current) => [saved, ...current]);
     setForm(emptyForm(config));
     setIsFormOpen(false);

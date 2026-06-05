@@ -89,22 +89,12 @@ export default function IntegrationsCenter() {
     setError(null);
     const form = new FormData();
     form.append("file", file);
-    const token = localStorage.getItem("access_token");
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
     try {
-      const response = await fetch(
-        `${baseUrl}/api/integrations/imports/upload?target_resource=${encodeURIComponent(targetResource)}&source_name=${encodeURIComponent(sourceName || "Manual upload")}`,
-        {
-          method: "POST",
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-          body: form,
-        }
-      );
-      if (!response.ok) {
-        const payload = await response.json().catch(() => ({ detail: "Upload failed" }));
-        throw new Error(payload.detail ?? "Upload failed");
-      }
-      setResult(await response.json());
+      setResult(await api.upload<ImportResult>(
+        "/api/integrations/imports/upload",
+        form,
+        { target_resource: targetResource, source_name: sourceName || "Manual upload" }
+      ));
       await loadSummary();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed");

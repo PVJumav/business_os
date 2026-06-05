@@ -9,7 +9,7 @@ import { api } from "@/services/api";
 import { FieldConfig, ResourceConfig } from "@/lib/resourceConfigs";
 import { hasResourcePermission } from "@/lib/permissions";
 
-type RecordValue = string | number | boolean | null | undefined;
+type RecordValue = string | number | boolean | null | undefined | Record<string, unknown> | unknown[];
 type DataRecord = Record<string, RecordValue> & { id?: string };
 type WorkflowDialog = { action: string; title: string } | null;
 
@@ -38,6 +38,7 @@ function emptyForm(config: ResourceConfig) {
 function formatLabel(value: RecordValue) {
   if (value === null || value === undefined || value === "") return "-";
   if (typeof value === "boolean") return value ? "Yes" : "No";
+  if (Array.isArray(value) || typeof value === "object") return JSON.stringify(value);
   return String(value).replaceAll("_", " ").replaceAll("-", " ");
 }
 
@@ -97,6 +98,23 @@ function backendUrl(path: string) {
   return path;
 }
 
+function normalizeRecord(value: unknown): DataRecord {
+  if (value && typeof value === "object" && !Array.isArray(value)) return value as DataRecord;
+  return {};
+}
+
+function normalizeRecordList(value: unknown): DataRecord[] {
+  if (Array.isArray(value)) return value.map(normalizeRecord);
+  if (value && typeof value === "object") {
+    const objectValue = value as Record<string, unknown>;
+    for (const key of ["records", "items", "data", "results", "rows"]) {
+      if (Array.isArray(objectValue[key])) return (objectValue[key] as unknown[]).map(normalizeRecord);
+    }
+    if (objectValue.id) return [normalizeRecord(objectValue)];
+  }
+  return [];
+}
+
 export default function ResourceManager({ config }: ResourceManagerProps) {
   const { user } = useAuth();
   const canWrite = hasResourcePermission(user, config.endpoint, config.key, "create") || hasResourcePermission(user, config.endpoint, config.key, "update");
@@ -133,10 +151,10 @@ export default function ResourceManager({ config }: ResourceManagerProps) {
     setError(null);
     try {
       const [items, stats] = await Promise.all([
-        api.get<DataRecord[]>(config.endpoint),
+        api.get<unknown>(config.endpoint),
         api.get<ResourceAnalytics>(config.analyticsEndpoint).catch(() => null),
       ]);
-      setRecords(items);
+      setRecords(normalizeRecordList(items));
       setSelectedIds(new Set());
       setAnalytics(stats);
     } catch (err) {
@@ -150,8 +168,8 @@ export default function ResourceManager({ config }: ResourceManagerProps) {
     const selectFields = config.fields.filter((field) => field.selectEndpoint);
     const optionEntries = await Promise.all(
       selectFields.map(async (field) => {
-        const rows = await api.get<OptionRecord[]>(field.selectEndpoint as string).catch(() => []);
-        return [field.name, rows] as const;
+        const rows = await api.get<unknown>(field.selectEndpoint as string).catch(() => []);
+        return [field.name, normalizeRecordList(rows) as OptionRecord[]] as const;
       })
     );
     setOptions(Object.fromEntries(optionEntries));
@@ -388,7 +406,7 @@ export default function ResourceManager({ config }: ResourceManagerProps) {
     setIsSaving(true);
     setError(null);
     try {
-      const updated = await api.put<DataRecord>(`${config.endpoint}/${selected.id}`, cleanPayloadFrom(selectedForm));
+      const updated = normalizeRecord(await api.put<unknown>(`${config.endpoint}/${selected.id}`, cleanPayloadFrom(selectedForm)));
       setSelected(updated);
       setIsSelectedEditing(false);
       await loadData();
@@ -454,13 +472,14 @@ export default function ResourceManager({ config }: ResourceManagerProps) {
     setIsSaving(true);
     setError(null);
     try {
-      const updated = await api.post<DataRecord & { recruitment?: DataRecord }>(`${config.endpoint}/${selected.id}/${actionEndpoint(action)}`, {
+      const response = normalizeRecord(await api.post<unknown>(`${config.endpoint}/${selected.id}/${actionEndpoint(action)}`, {
         ...payload,
         reason,
         comments: payload.comments ?? reason,
         adjustment_reason: payload.adjustment_reason ?? reason,
-      });
-      setSelected(updated.recruitment ?? updated);
+      }));
+      const updated = normalizeRecord(response.recruitment ?? response.record ?? response.data ?? response);
+      setSelected(updated);
       setWorkflowDialog(null);
       setWorkflowForm({});
       await loadData();
@@ -543,23 +562,14 @@ export default function ResourceManager({ config }: ResourceManagerProps) {
     setError(null);
     const form = new FormData();
     form.append("file", file);
-    const token = localStorage.getItem("access_token");
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/api/integrations/imports/bulk-upload?endpoint=${encodeURIComponent(config.endpoint)}&resource_title=${encodeURIComponent(config.title)}`,
-        {
-          method: "POST",
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-          body: form,
-        }
+      const result = await api.upload<Record<string, RecordValue>>(
+        "/api/integrations/imports/bulk-upload",
+        form,
+        { endpoint: config.endpoint, resource_title: config.title }
       );
-      if (!response.ok) {
-        const payload = await response.json().catch(() => ({ detail: "Upload failed" }));
-        throw new Error(typeof payload.detail === "string" ? payload.detail : "Upload failed");
-      }
-      const result = await response.json();
       if (!result.imported_rows) {
-        throw new Error(result.parse_summary || "The file was read, but no rows matched this section's fields.");
+        throw new Error(formatLabel(result.parse_summary) || "The file was read, but no rows matched this section's fields.");
       }
       await loadData();
     } catch (err) {
