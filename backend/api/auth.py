@@ -8,6 +8,7 @@ import urllib.request
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Header, HTTPException, status
+from sqlalchemy.exc import OperationalError
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
@@ -346,6 +347,11 @@ def get_current_user(authorization: Optional[str] = Header(default=None), db: Se
         )
 
     user = _decode_token(token)
-    user.roles = sorted(user_role_codes(db, user))
-    user.permissions = effective_permissions(db, user)
+    try:
+        user.roles = sorted(user_role_codes(db, user))
+        user.permissions = effective_permissions(db, user)
+    except OperationalError:
+        db.rollback()
+        user.roles = sorted(user_role_codes(db, user))
+        user.permissions = effective_permissions(db, user)
     return user
