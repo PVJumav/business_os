@@ -21,7 +21,15 @@ Use these settings for a static site deployment:
 - Framework preset: None / Static
 - Root directory: `lunexao-website`
 - Build command: leave empty
-- Build output directory: `/`
+- Build output directory: `.`
+
+This folder includes its own `wrangler.toml` with:
+
+```toml
+pages_build_output_dir = "."
+```
+
+That prevents Cloudflare from using the root BusinessOS Wrangler config, which is meant for the Next.js app.
 
 Then add the custom domain:
 
