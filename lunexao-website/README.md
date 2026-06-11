@@ -40,9 +40,15 @@ If the domain is already managed in Cloudflare DNS, Pages can attach the DNS rec
 
 ## Contact Emails
 
-The current buttons use:
+The current MVP1 buttons send mail drafts to:
+
+- `pauljumav@gmail.com`
+
+Recommended domain aliases to forward into that Gmail through Cloudflare Email Routing:
 
 - `info@lunexao.com`
 - `careers@lunexao.com`
+- `training@lunexao.com`
+- `support@lunexao.com`
 
-Update `script.js` if you want different inboxes.
+Update `script.js` if you want different inboxes later.

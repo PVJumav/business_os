@@ -75,6 +75,8 @@ const webinars = [
   },
 ];
 
+const inboxEmail = "pauljumav@gmail.com";
+
 function renderBlogs(filter = "") {
   const list = document.getElementById("blog-list");
   const term = filter.trim().toLowerCase();
@@ -110,7 +112,7 @@ function renderJobs(filter = "all") {
               <span>${item.category}</span>
             </div>
           </div>
-          <a class="button primary" href="mailto:careers@lunexao.com?subject=${encodeURIComponent(`Application: ${item.title}`)}">Apply</a>
+          <a class="button primary" href="mailto:${inboxEmail}?subject=${encodeURIComponent(`Lunexao application: ${item.title}`)}">Apply</a>
         </article>
       `
     )
@@ -155,7 +157,7 @@ function bindContactForm() {
     const body = encodeURIComponent(
       `Name: ${form.get("name")}\nEmail: ${form.get("email")}\nInterest: ${form.get("interest")}\n\n${form.get("message")}`
     );
-    window.location.href = `mailto:info@lunexao.com?subject=${subject}&body=${body}`;
+    window.location.href = `mailto:${inboxEmail}?subject=${subject}&body=${body}`;
   });
 }
 
