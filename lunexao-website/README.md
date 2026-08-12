@@ -15,7 +15,7 @@ This folder is separate from the Business OS application frontend. Deploy it as 
 - `/insights/` - Lunexao Insights listing with search and category filters
 - `/careers/` - Open positions and recruitment
 - `/contact/` - Secure contact form
-- `/api/contact` - Cloudflare Pages Function for contact form email delivery
+- `/api/contact` - optional Cloudflare Pages Function fallback for contact form email delivery
 
 ## Cloudflare Pages Settings
 
@@ -39,7 +39,7 @@ Then add the custom domains:
 
 ## Contact Form Email
 
-The contact form posts to `/api/contact`; it does not use `mailto:` and does not expose Gmail credentials in frontend code.
+The contact form posts directly to Formspree; it does not use `mailto:` and does not expose Gmail credentials in frontend code.
 
 Messages are sent to:
 
@@ -50,7 +50,7 @@ The current production setup uses Formspree:
 - Endpoint: `https://formspree.io/f/xaewordo`
 - Destination inbox configured in Formspree: `pauljumav@gmail.com`
 
-This works on Cloudflare Pages Free because the Pages Function sends the form submission to Formspree over HTTPS.
+This works on Cloudflare Pages Free because the browser submits directly to Formspree over HTTPS. The `/api/contact` Pages Function remains in the repo as an optional fallback, but the live form does not depend on Cloudflare Email Sending.
 
 Cloudflare Email Service remains available as a fallback if you later upgrade to Workers Paid:
 
@@ -68,7 +68,7 @@ Optional environment variables:
 - `GMAIL_CLIENT_SECRET`
 - `GMAIL_REFRESH_TOKEN`
 
-Cloudflare Email Routing can forward domain addresses such as `info@lunexao.com` into `pauljumav@gmail.com`. It does not send website form submissions by itself. The form now uses Formspree first, then Cloudflare Email Service, then Gmail API. If all senders fail, `/api/contact` returns an error and the frontend will not display a false success message.
+Cloudflare Email Routing can forward domain addresses such as `info@lunexao.com` into `pauljumav@gmail.com`. It does not send website form submissions by itself. The live form now uses Formspree directly. If you later want a private server-side sender, switch the frontend back to `/api/contact` and configure either Cloudflare Email Service or Gmail API.
 
 ## Spam Protection
 

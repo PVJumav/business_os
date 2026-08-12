@@ -21,6 +21,7 @@ const jobs = [
 ];
 
 const trainingCategories = ["Business Technology", "Digital Transformation", "Process Automation", "Cybersecurity", "Cloud & Infrastructure", "Data & Analytics", "AI & Emerging Technology", "IT Governance", "Business Applications"];
+const contactEndpoint = "https://formspree.io/f/xaewordo";
 
 function html(strings, ...values) {
   return strings.reduce((acc, part, index) => acc + part + (values[index] ?? ""), "");
@@ -125,10 +126,17 @@ function bindContactForm() {
     submit.textContent = "Sending...";
     const payload = Object.fromEntries(new FormData(form).entries());
     try {
-      const response = await fetch("/api/contact", {
+      const response = await fetch(contactEndpoint, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          ...payload,
+          _replyto: payload.email,
+          _subject: `New Lunexao Website Enquiry - ${payload.subject}`,
+        }),
       });
       const result = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(result.error || "Message could not be sent. Please try again.");
