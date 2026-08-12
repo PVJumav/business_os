@@ -43,17 +43,17 @@ The contact form posts to `/api/contact`; it does not use `mailto:` and does not
 
 Messages are sent to:
 
-- `chatgptaccpresales@gmail.com`
+- `pauljumav@gmail.com`
 
 Configure these Cloudflare Pages environment variables/secrets:
 
-- `EMAIL_TO=chatgptaccpresales@gmail.com`
+- `EMAIL_TO=pauljumav@gmail.com`
 - `EMAIL_FROM` - Gmail account or verified sender used by the Gmail API
 - `GMAIL_CLIENT_ID`
 - `GMAIL_CLIENT_SECRET`
 - `GMAIL_REFRESH_TOKEN`
 
-The Gmail account must have an OAuth refresh token with permission to send mail. If these values are missing, `/api/contact` returns an error and the frontend will not display a false success message.
+Cloudflare Email Routing can forward domain addresses such as `info@lunexao.com` into `pauljumav@gmail.com`, but the website form still needs a server-side sender to deliver the submitted form as an email. The current implementation uses the Gmail API from the Cloudflare Pages Function. The Gmail account must have an OAuth refresh token with permission to send mail. If these values are missing, `/api/contact` returns an error and the frontend will not display a false success message.
 
 ## Spam Protection
 

@@ -46,7 +46,7 @@ async function getGmailAccessToken(env) {
 }
 
 async function sendGmail(env, data) {
-  const to = env.EMAIL_TO || "chatgptaccpresales@gmail.com";
+  const to = env.EMAIL_TO || "pauljumav@gmail.com";
   const from = env.EMAIL_FROM || "me";
   const submittedAt = new Date().toISOString();
   const subject = `New Lunexao Website Enquiry - ${data.subject}`;
