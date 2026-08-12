@@ -20,8 +20,28 @@ const jobs = [
   { title: "Business Development Executive", category: "sales", location: "Nairobi", type: "Full-time", requirements: "B2B sales, relationship management and proposal coordination.", summary: "Build customer relationships and support growth of Lunexao technology services." },
 ];
 
-const trainingCategories = ["Business Technology", "Digital Transformation", "Process Automation", "Cybersecurity", "Cloud & Infrastructure", "Data & Analytics", "AI & Emerging Technology", "IT Governance", "Business Applications"];
+const trainingCategories = [
+  { title: "Business Technology", summary: "Understand how CRM, HR, finance, projects and operations platforms support daily management decisions." },
+  { title: "Digital Transformation", summary: "Learn how to move from scattered digital tools to coordinated change programs with measurable outcomes." },
+  { title: "Process Automation", summary: "Map repetitive work, define approval rules and identify workflows that can be simplified or automated." },
+  { title: "Cybersecurity", summary: "Build safer habits around identity, phishing, data handling, incident reporting and everyday risk awareness." },
+  { title: "Cloud & Infrastructure", summary: "Get practical grounding in cloud readiness, infrastructure planning, resilience and service operations." },
+  { title: "Data & Analytics", summary: "Turn operational data into dashboards, useful KPIs and reporting routines that managers can trust." },
+  { title: "AI & Emerging Technology", summary: "Evaluate AI use cases through business value, governance, data readiness and human review controls." },
+  { title: "IT Governance", summary: "Strengthen policy, access control, audit evidence, technology ownership and compliance reporting." },
+  { title: "Business Applications", summary: "Equip users to work confidently inside the systems that run sales, HR, finance and delivery." },
+];
 const contactEndpoint = "https://formspree.io/f/xaewordo";
+const whatsappHref = "https://wa.me/?text=Hello%20Lunexao%2C%20I%20would%20like%20to%20ask%20about%20your%20business%20technology%20services.";
+const botReplies = [
+  { keys: ["price", "cost", "pricing"], answer: "Lunexao prices work based on scope, service area, delivery model and support needs. Share the solution you are considering and we can prepare a practical estimate." },
+  { keys: ["demo", "book", "meeting"], answer: "You can book a demo from any solution card or use the contact form. Tell us the product area, team size and preferred date." },
+  { keys: ["training", "academy", "course"], answer: "Lunexao Academy covers business technology, automation, cybersecurity, cloud, data, AI, governance and business applications. Corporate training can be customised." },
+  { keys: ["career", "job", "apply"], answer: "Open roles are listed on the Careers page. Use the career application form there so your application is labelled correctly." },
+  { keys: ["crm", "hr", "finance", "project"], answer: "Our business technology work covers CRM, HR and workforce management, finance workflows, projects, analytics and integrated operating platforms." },
+  { keys: ["automation", "workflow", "approval"], answer: "We help map processes, define rules, automate approvals, route documents and create reporting visibility across teams." },
+  { keys: ["contact", "email", "whatsapp"], answer: "Use the contact form or the WhatsApp agent button. Website enquiries are routed through Formspree to Lunexao." },
+];
 
 function html(strings, ...values) {
   return strings.reduce((acc, part, index) => acc + part + (values[index] ?? ""), "");
@@ -79,7 +99,7 @@ function renderJobs(filter = "all") {
         <p><strong>Requirements:</strong> ${item.requirements}</p>
         <div class="pill-row"><span>${item.location}</span><span>${item.type}</span><span>${item.category}</span></div>
       </div>
-      <a class="button primary" href="/contact/">Apply</a>
+      <a class="button primary" href="#career-application">Apply</a>
     </article>
   `).join("");
 }
@@ -87,11 +107,15 @@ function renderJobs(filter = "all") {
 function renderTraining() {
   const categories = document.getElementById("training-categories");
   if (categories) {
-    categories.innerHTML = trainingCategories.map((item) => `<article class="card"><h3>${item}</h3><p>Practical training designed for business users, managers and technical teams.</p><a href="/contact/">Enquire</a></article>`).join("");
+    categories.innerHTML = trainingCategories.map((item) => `<article class="card"><h3>${item.title}</h3><p>${item.summary}</p><a href="/contact/">Enquire</a></article>`).join("");
   }
   const list = document.getElementById("training-list");
   if (list) {
-    list.innerHTML = ["Business Technology Enablement", "Process Automation Clinic", "Cybersecurity Awareness for Teams"].map((item) => `<article class="card"><span class="card-icon">Upcoming</span><h3>${item}</h3><p>Available for corporate cohorts and scheduled public sessions.</p><a href="/contact/">Register interest</a></article>`).join("");
+    list.innerHTML = [
+      { title: "Business Technology Enablement", summary: "Hands-on sessions for teams adopting CRM, HR, finance, project and analytics workflows." },
+      { title: "Process Automation Clinic", summary: "A guided workshop where teams identify candidate workflows and draft automation-ready process maps." },
+      { title: "Cybersecurity Awareness for Teams", summary: "Practical user training on phishing, passwords, data handling, incident reporting and safe collaboration." },
+    ].map((item) => `<article class="card"><span class="card-icon">Upcoming</span><h3>${item.title}</h3><p>${item.summary}</p><a href="/contact/">Register interest</a></article>`).join("");
   }
 }
 
@@ -153,6 +177,69 @@ function bindContactForm() {
   });
 }
 
+function addUtilityWidgets() {
+  if (document.querySelector(".site-tools")) return;
+  document.body.insertAdjacentHTML("beforeend", `
+    <div class="site-tools" aria-label="Site assistance tools">
+      <button class="tool-button contrast-toggle" type="button" aria-label="Change contrast mode">Contrast</button>
+      <a class="tool-button whatsapp-agent" href="${whatsappHref}" target="_blank" rel="noopener">WhatsApp</a>
+      <button class="tool-button chat-toggle" type="button" aria-expanded="false" aria-controls="chatbot-panel">Chat</button>
+    </div>
+    <section id="chatbot-panel" class="chatbot-panel" aria-label="Lunexao chatbot" hidden>
+      <div class="chatbot-header">
+        <div><strong>Lunexao Assistant</strong><span>Basic customer questions</span></div>
+        <button class="chat-close" type="button" aria-label="Close chatbot">x</button>
+      </div>
+      <div id="chatbot-log" class="chatbot-log">
+        <p><strong>Lunexao:</strong> Hi. Ask about demos, pricing, training, careers, automation, CRM, HR, finance or contact options.</p>
+      </div>
+      <form id="chatbot-form" class="chatbot-form">
+        <input name="question" placeholder="Type your question" autocomplete="off" required />
+        <button type="submit">Send</button>
+      </form>
+    </section>
+  `);
+}
+
+function bindContrastToggle() {
+  const modes = ["standard", "dark", "high"];
+  const saved = localStorage.getItem("lunexaoContrast") || "standard";
+  document.documentElement.dataset.contrast = saved;
+  document.querySelector(".contrast-toggle")?.addEventListener("click", () => {
+    const current = document.documentElement.dataset.contrast || "standard";
+    const next = modes[(modes.indexOf(current) + 1) % modes.length];
+    document.documentElement.dataset.contrast = next;
+    localStorage.setItem("lunexaoContrast", next);
+  });
+}
+
+function bindChatbot() {
+  const panel = document.getElementById("chatbot-panel");
+  const toggle = document.querySelector(".chat-toggle");
+  const close = document.querySelector(".chat-close");
+  const form = document.getElementById("chatbot-form");
+  const log = document.getElementById("chatbot-log");
+  if (!panel || !toggle || !form || !log) return;
+  const setOpen = (open) => {
+    panel.hidden = !open;
+    toggle.setAttribute("aria-expanded", String(open));
+  };
+  toggle.addEventListener("click", () => setOpen(panel.hidden));
+  close?.addEventListener("click", () => setOpen(false));
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const input = form.elements.question;
+    const question = input.value.trim();
+    if (!question) return;
+    const lower = question.toLowerCase();
+    const matched = botReplies.find((item) => item.keys.some((key) => lower.includes(key)));
+    const answer = matched?.answer || "I can help with common Lunexao questions. For a specific request, use the contact form or book a demo and the team will follow up.";
+    log.insertAdjacentHTML("beforeend", `<p><strong>You:</strong> ${question.replace(/[<>&]/g, "")}</p><p><strong>Lunexao:</strong> ${answer}</p>`);
+    input.value = "";
+    log.scrollTop = log.scrollHeight;
+  });
+}
+
 document.getElementById("year")?.replaceChildren(String(new Date().getFullYear()));
 document.getElementById("insight-search")?.addEventListener("input", () => renderInsights("insights-list"));
 document.getElementById("insight-category")?.addEventListener("change", () => renderInsights("insights-list"));
@@ -167,3 +254,6 @@ renderJobs();
 renderTraining();
 bindNavigation();
 bindContactForm();
+addUtilityWidgets();
+bindContrastToggle();
+bindChatbot();
