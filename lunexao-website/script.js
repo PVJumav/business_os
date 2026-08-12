@@ -187,7 +187,7 @@ function addUtilityWidgets() {
     </div>
     <section id="whatsapp-panel" class="chatbot-panel whatsapp-panel" aria-label="WhatsApp agent" hidden>
       <div class="chatbot-header">
-        <div><strong>WhatsApp Lunexao</strong><span>Send your question to +254 728 775 106</span></div>
+        <div><strong>WhatsApp Lunexao</strong><span>Type your question and continue in WhatsApp</span></div>
         <button class="whatsapp-close chat-close" type="button" aria-label="Close WhatsApp panel">x</button>
       </div>
       <form id="whatsapp-form" class="chatbot-form whatsapp-form">
