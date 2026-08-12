@@ -45,13 +45,20 @@ Messages are sent to:
 
 - `pauljumav@gmail.com`
 
-The preferred production setup uses Cloudflare Email Service:
+The current production setup uses Formspree:
+
+- Endpoint: `https://formspree.io/f/xaewordo`
+- Destination inbox configured in Formspree: `pauljumav@gmail.com`
+
+This works on Cloudflare Pages Free because the Pages Function sends the form submission to Formspree over HTTPS.
+
+Cloudflare Email Service remains available as a fallback if you later upgrade to Workers Paid:
 
 - `[[send_email]]` binding name: `EMAIL`
 - Destination address: `pauljumav@gmail.com`
 - Sender default: `contact@lunexao.com`
 
-`wrangler.toml` already includes the `EMAIL` send binding. In Cloudflare, confirm that `pauljumav@gmail.com` is verified as a destination address and redeploy the Pages project.
+`wrangler.toml` already includes the `EMAIL` send binding, but Cloudflare Email Sending requires Workers Paid.
 
 Optional environment variables:
 
@@ -61,7 +68,7 @@ Optional environment variables:
 - `GMAIL_CLIENT_SECRET`
 - `GMAIL_REFRESH_TOKEN`
 
-Cloudflare Email Routing can forward domain addresses such as `info@lunexao.com` into `pauljumav@gmail.com`. The website form uses the Cloudflare Email Service binding first. Gmail API variables are only a fallback. If neither sender is configured, `/api/contact` returns an error and the frontend will not display a false success message.
+Cloudflare Email Routing can forward domain addresses such as `info@lunexao.com` into `pauljumav@gmail.com`. It does not send website form submissions by itself. The form now uses Formspree first, then Cloudflare Email Service, then Gmail API. If all senders fail, `/api/contact` returns an error and the frontend will not display a false success message.
 
 ## Spam Protection
 

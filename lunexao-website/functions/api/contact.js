@@ -1,4 +1,5 @@
 const REQUIRED_FIELDS = ["name", "company", "email", "interest", "subject", "message"];
+const FORMSPREE_ENDPOINT = "https://formspree.io/f/xaewordo";
 
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -106,6 +107,35 @@ async function sendGmail(env, data) {
   }
 }
 
+async function sendFormspree(env, data) {
+  const message = buildMessage(env, data);
+  const response = await fetch(FORMSPREE_ENDPOINT, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify({
+      name: data.name,
+      company: data.company,
+      email: data.email,
+      phone: data.phone,
+      interest: data.interest,
+      subject: message.subject,
+      message: data.message,
+      _replyto: data.email,
+      _subject: message.subject,
+      recipient: message.to,
+      submitted_to: env.EMAIL_TO || "pauljumav@gmail.com",
+      text: message.text,
+    }),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(payload.error || payload.message || "Formspree delivery failed.");
+  }
+}
+
 export async function onRequestOptions() {
   return new Response(null, {
     status: 204,
@@ -149,12 +179,14 @@ export async function onRequestPost({ request, env }) {
     return json({ error: "Please provide a longer message." }, 400);
   }
   try {
-    if (env.EMAIL) {
+    if (FORMSPREE_ENDPOINT) {
+      await sendFormspree(env, data);
+    } else if (env.EMAIL) {
       await sendCloudflareEmail(env, data);
     } else if (env.GMAIL_CLIENT_ID && env.GMAIL_CLIENT_SECRET && env.GMAIL_REFRESH_TOKEN) {
       await sendGmail(env, data);
     } else {
-      return json({ error: "Email delivery is not configured. Add the Cloudflare EMAIL binding or Gmail API secrets." }, 503);
+      return json({ error: "Email delivery is not configured. Add Formspree, the Cloudflare EMAIL binding, or Gmail API secrets." }, 503);
     }
     return json({ ok: true });
   } catch (error) {
