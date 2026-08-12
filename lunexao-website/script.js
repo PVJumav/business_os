@@ -32,7 +32,7 @@ const trainingCategories = [
   { title: "Business Applications", summary: "Equip users to work confidently inside the systems that run sales, HR, finance and delivery." },
 ];
 const contactEndpoint = "https://formspree.io/f/xaewordo";
-const whatsappHref = "https://wa.me/?text=Hello%20Lunexao%2C%20I%20would%20like%20to%20ask%20about%20your%20business%20technology%20services.";
+const whatsappNumber = "254728775106";
 const botReplies = [
   { keys: ["price", "cost", "pricing"], answer: "Lunexao prices work based on scope, service area, delivery model and support needs. Share the solution you are considering and we can prepare a practical estimate." },
   { keys: ["demo", "book", "meeting"], answer: "You can book a demo from any solution card or use the contact form. Tell us the product area, team size and preferred date." },
@@ -182,9 +182,19 @@ function addUtilityWidgets() {
   document.body.insertAdjacentHTML("beforeend", `
     <div class="site-tools" aria-label="Site assistance tools">
       <button class="tool-button contrast-toggle" type="button" aria-label="Change contrast mode">Contrast</button>
-      <a class="tool-button whatsapp-agent" href="${whatsappHref}" target="_blank" rel="noopener">WhatsApp</a>
+      <button class="tool-button whatsapp-agent" type="button" aria-expanded="false" aria-controls="whatsapp-panel">WhatsApp</button>
       <button class="tool-button chat-toggle" type="button" aria-expanded="false" aria-controls="chatbot-panel">Chat</button>
     </div>
+    <section id="whatsapp-panel" class="chatbot-panel whatsapp-panel" aria-label="WhatsApp agent" hidden>
+      <div class="chatbot-header">
+        <div><strong>WhatsApp Lunexao</strong><span>Send your question to +254 728 775 106</span></div>
+        <button class="whatsapp-close chat-close" type="button" aria-label="Close WhatsApp panel">x</button>
+      </div>
+      <form id="whatsapp-form" class="chatbot-form whatsapp-form">
+        <textarea name="message" rows="4" placeholder="Type your WhatsApp question" required></textarea>
+        <button type="submit">Open WhatsApp</button>
+      </form>
+    </section>
     <section id="chatbot-panel" class="chatbot-panel" aria-label="Lunexao chatbot" hidden>
       <div class="chatbot-header">
         <div><strong>Lunexao Assistant</strong><span>Basic customer questions</span></div>
@@ -240,6 +250,30 @@ function bindChatbot() {
   });
 }
 
+function bindWhatsAppAgent() {
+  const panel = document.getElementById("whatsapp-panel");
+  const toggle = document.querySelector(".whatsapp-agent");
+  const close = document.querySelector(".whatsapp-close");
+  const form = document.getElementById("whatsapp-form");
+  if (!panel || !toggle || !form) return;
+  const setOpen = (open) => {
+    panel.hidden = !open;
+    toggle.setAttribute("aria-expanded", String(open));
+  };
+  toggle.addEventListener("click", () => setOpen(panel.hidden));
+  close?.addEventListener("click", () => setOpen(false));
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const message = form.elements.message.value.trim();
+    if (!message) {
+      form.reportValidity();
+      return;
+    }
+    const text = encodeURIComponent(`Hello Lunexao, ${message}`);
+    window.open(`https://wa.me/${whatsappNumber}?text=${text}`, "_blank", "noopener");
+  });
+}
+
 document.getElementById("year")?.replaceChildren(String(new Date().getFullYear()));
 document.getElementById("insight-search")?.addEventListener("input", () => renderInsights("insights-list"));
 document.getElementById("insight-category")?.addEventListener("change", () => renderInsights("insights-list"));
@@ -257,3 +291,4 @@ bindContactForm();
 addUtilityWidgets();
 bindContrastToggle();
 bindChatbot();
+bindWhatsAppAgent();

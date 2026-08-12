@@ -24,6 +24,7 @@
   --green-100: #123424;
   --brown-100: #1f1a12;
   --gold-100: #3a2f12;
+  color-scheme: dark;
 }
 
 :root[data-contrast="high"] {
@@ -38,6 +39,94 @@
   --green-100: #f4fff6;
   --gold-500: #b8860b;
   --gold-100: #fff7bf;
+  color-scheme: light;
+}
+
+:root[data-contrast="dark"] .site-header,
+:root[data-contrast="dark"] .site-nav,
+:root[data-contrast="dark"] .card,
+:root[data-contrast="dark"] .event-card,
+:root[data-contrast="dark"] .job-card,
+:root[data-contrast="dark"] .note,
+:root[data-contrast="dark"] .chatbot-panel,
+:root[data-contrast="dark"] .metric,
+:root[data-contrast="dark"] .step-card {
+  background: var(--white);
+  border-color: var(--line);
+}
+
+:root[data-contrast="dark"] .brand small,
+:root[data-contrast="dark"] .site-nav a,
+:root[data-contrast="dark"] .nav-toggle,
+:root[data-contrast="dark"] .section h2,
+:root[data-contrast="dark"] .card h3,
+:root[data-contrast="dark"] .event-card h3,
+:root[data-contrast="dark"] .job-card h3,
+:root[data-contrast="dark"] .step-card h3,
+:root[data-contrast="dark"] .contact-form label,
+:root[data-contrast="dark"] .career-form label,
+:root[data-contrast="dark"] .metric strong,
+:root[data-contrast="dark"] .feature-list li,
+:root[data-contrast="dark"] .pill-row span {
+  color: var(--ink);
+}
+
+:root[data-contrast="dark"] .prose p,
+:root[data-contrast="dark"] .section > p,
+:root[data-contrast="dark"] .card p,
+:root[data-contrast="dark"] .event-card p,
+:root[data-contrast="dark"] .job-card p,
+:root[data-contrast="dark"] .step-card p,
+:root[data-contrast="dark"] .metric span,
+:root[data-contrast="dark"] .chatbot-log p,
+:root[data-contrast="dark"] .muted {
+  color: var(--muted);
+}
+
+:root[data-contrast="dark"] .search,
+:root[data-contrast="dark"] .contact-form input,
+:root[data-contrast="dark"] .contact-form select,
+:root[data-contrast="dark"] .contact-form textarea,
+:root[data-contrast="dark"] .career-form input,
+:root[data-contrast="dark"] .career-form select,
+:root[data-contrast="dark"] .career-form textarea,
+:root[data-contrast="dark"] .chatbot-form input,
+:root[data-contrast="dark"] .chatbot-form textarea {
+  background: var(--paper);
+  border-color: var(--line);
+  color: var(--ink);
+}
+
+:root[data-contrast="high"] .hero-media,
+:root[data-contrast="high"] .page-hero {
+  background: var(--white);
+  color: var(--ink);
+}
+
+:root[data-contrast="high"] .hero p,
+:root[data-contrast="high"] .page-hero p,
+:root[data-contrast="high"] .hero h1,
+:root[data-contrast="high"] .page-hero h1,
+:root[data-contrast="high"] .dark p,
+:root[data-contrast="high"] .dark h2,
+:root[data-contrast="high"] .dark h3,
+:root[data-contrast="high"] .demo-band p,
+:root[data-contrast="high"] .demo-band h2 {
+  color: var(--ink);
+}
+
+:root[data-contrast="high"] .dark,
+:root[data-contrast="high"] .demo-band,
+:root[data-contrast="high"] .tool-button,
+:root[data-contrast="high"] .chatbot-header {
+  background: var(--white);
+  color: var(--ink);
+  border: 2px solid var(--ink);
+}
+
+:root[data-contrast="high"] .button.primary,
+:root[data-contrast="high"] .chatbot-form button {
+  border: 2px solid var(--ink);
 }
 
 * { box-sizing: border-box; }
@@ -197,7 +286,7 @@ button, input, select, textarea { font: inherit; }
   font-weight: 760;
 }
 
-.search, .contact-form input, .contact-form select, .contact-form textarea {
+.search, .contact-form input, .contact-form select, .contact-form textarea, .career-form input, .career-form select, .career-form textarea {
   min-height: 44px;
   border: 1px solid var(--line);
   border-radius: 12px;
@@ -206,7 +295,7 @@ button, input, select, textarea { font: inherit; }
   padding: 10px 12px;
   outline: none;
 }
-.search:focus, .contact-form input:focus, .contact-form select:focus, .contact-form textarea:focus {
+.search:focus, .contact-form input:focus, .contact-form select:focus, .contact-form textarea:focus, .career-form input:focus, .career-form select:focus, .career-form textarea:focus {
   border-color: var(--green-700);
   box-shadow: 0 0 0 4px rgba(23, 100, 71, 0.12);
 }
@@ -428,6 +517,18 @@ button, input, select, textarea { font: inherit; }
   background: var(--paper);
   color: var(--ink);
   padding: 8px 12px;
+}
+.chatbot-form textarea {
+  min-height: 96px;
+  resize: vertical;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--paper);
+  color: var(--ink);
+  padding: 10px 12px;
+}
+.whatsapp-form {
+  grid-template-columns: 1fr;
 }
 .chatbot-form button {
   border: 0;
