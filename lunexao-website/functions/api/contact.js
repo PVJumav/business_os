@@ -27,6 +27,41 @@ function base64Url(input) {
   return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
+function buildMessage(env, data) {
+  const to = env.EMAIL_TO || "pauljumav@gmail.com";
+  const from = env.EMAIL_FROM || "contact@lunexao.com";
+  const submittedAt = new Date().toISOString();
+  const subject = `New Lunexao Website Enquiry - ${data.subject}`;
+  const text = [
+    `Name: ${data.name}`,
+    `Company: ${data.company}`,
+    `Email: ${data.email}`,
+    `Phone: ${data.phone || "Not provided"}`,
+    `Area of Interest: ${data.interest}`,
+    `Subject: ${data.subject}`,
+    "",
+    "Message:",
+    data.message,
+    "",
+    `Submitted At: ${submittedAt}`,
+  ].join("\n");
+  return { to, from, subject, text, replyTo: data.email };
+}
+
+async function sendCloudflareEmail(env, data) {
+  if (!env.EMAIL || typeof env.EMAIL.send !== "function") {
+    throw new Error("Cloudflare Email binding is not available.");
+  }
+  const message = buildMessage(env, data);
+  await env.EMAIL.send({
+    to: message.to,
+    from: message.from,
+    subject: message.subject,
+    text: message.text,
+    replyTo: message.replyTo,
+  });
+}
+
 async function getGmailAccessToken(env) {
   const response = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST",
@@ -46,31 +81,15 @@ async function getGmailAccessToken(env) {
 }
 
 async function sendGmail(env, data) {
-  const to = env.EMAIL_TO || "pauljumav@gmail.com";
-  const from = env.EMAIL_FROM || "me";
-  const submittedAt = new Date().toISOString();
-  const subject = `New Lunexao Website Enquiry - ${data.subject}`;
-  const body = [
-    `Name: ${data.name}`,
-    `Company: ${data.company}`,
-    `Email: ${data.email}`,
-    `Phone: ${data.phone || "Not provided"}`,
-    `Area of Interest: ${data.interest}`,
-    `Subject: ${data.subject}`,
-    "",
-    "Message:",
-    data.message,
-    "",
-    `Submitted At: ${submittedAt}`,
-  ].join("\n");
+  const message = buildMessage(env, data);
   const raw = [
-    `To: ${to}`,
-    `From: ${from}`,
+    `To: ${message.to}`,
+    `From: ${message.from}`,
     `Reply-To: ${data.email}`,
-    `Subject: ${subject}`,
+    `Subject: ${message.subject}`,
     "Content-Type: text/plain; charset=UTF-8",
     "",
-    body,
+    message.text,
   ].join("\r\n");
   const accessToken = await getGmailAccessToken(env);
   const response = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/messages/send", {
@@ -129,12 +148,14 @@ export async function onRequestPost({ request, env }) {
   if (data.message.length < 10) {
     return json({ error: "Please provide a longer message." }, 400);
   }
-  if (!env.GMAIL_CLIENT_ID || !env.GMAIL_CLIENT_SECRET || !env.GMAIL_REFRESH_TOKEN) {
-    return json({ error: "Email delivery is not configured yet." }, 503);
-  }
-
   try {
-    await sendGmail(env, data);
+    if (env.EMAIL) {
+      await sendCloudflareEmail(env, data);
+    } else if (env.GMAIL_CLIENT_ID && env.GMAIL_CLIENT_SECRET && env.GMAIL_REFRESH_TOKEN) {
+      await sendGmail(env, data);
+    } else {
+      return json({ error: "Email delivery is not configured. Add the Cloudflare EMAIL binding or Gmail API secrets." }, 503);
+    }
     return json({ ok: true });
   } catch (error) {
     return json({ error: error.message || "Message could not be sent." }, 502);

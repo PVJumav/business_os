@@ -45,15 +45,23 @@ Messages are sent to:
 
 - `pauljumav@gmail.com`
 
-Configure these Cloudflare Pages environment variables/secrets:
+The preferred production setup uses Cloudflare Email Service:
+
+- `[[send_email]]` binding name: `EMAIL`
+- Destination address: `pauljumav@gmail.com`
+- Sender default: `contact@lunexao.com`
+
+`wrangler.toml` already includes the `EMAIL` send binding. In Cloudflare, confirm that `pauljumav@gmail.com` is verified as a destination address and redeploy the Pages project.
+
+Optional environment variables:
 
 - `EMAIL_TO=pauljumav@gmail.com`
-- `EMAIL_FROM` - Gmail account or verified sender used by the Gmail API
+- `EMAIL_FROM=contact@lunexao.com`
 - `GMAIL_CLIENT_ID`
 - `GMAIL_CLIENT_SECRET`
 - `GMAIL_REFRESH_TOKEN`
 
-Cloudflare Email Routing can forward domain addresses such as `info@lunexao.com` into `pauljumav@gmail.com`, but the website form still needs a server-side sender to deliver the submitted form as an email. The current implementation uses the Gmail API from the Cloudflare Pages Function. The Gmail account must have an OAuth refresh token with permission to send mail. If these values are missing, `/api/contact` returns an error and the frontend will not display a false success message.
+Cloudflare Email Routing can forward domain addresses such as `info@lunexao.com` into `pauljumav@gmail.com`. The website form uses the Cloudflare Email Service binding first. Gmail API variables are only a fallback. If neither sender is configured, `/api/contact` returns an error and the frontend will not display a false success message.
 
 ## Spam Protection
 
