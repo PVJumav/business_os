@@ -1,7 +1,3 @@
 name = "lunexao-website"
 compatibility_date = "2026-06-09"
 pages_build_output_dir = "."
-
-[[send_email]]
-name = "EMAIL"
-destination_address = "pauljumav@gmail.com"
