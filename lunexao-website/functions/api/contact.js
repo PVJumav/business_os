@@ -1,5 +1,13 @@
 const REQUIRED_FIELDS = ["name", "company", "email", "interest", "subject", "message"];
 const FORMSPREE_ENDPOINT = "https://formspree.io/f/xaewordo";
+const MAILBOXES = {
+  general: "contact@lunexao.com",
+  info: "info@lunexao.com",
+  careers: "careers@lunexao.com",
+  training: "training@lunexao.com",
+  webinars: "webinars@lunexao.com",
+  support: "support@lunexao.com",
+};
 
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -28,16 +36,28 @@ function base64Url(input) {
   return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
+function getMailboxRoute(data) {
+  const text = [data.interest, data.subject, data.form_type, data.role].join(" ").toLowerCase();
+  if (text.includes("career") || text.includes("job") || text.includes("apply")) return { label: "Careers", email: MAILBOXES.careers };
+  if (text.includes("training") || text.includes("academy") || text.includes("course")) return { label: "Training", email: MAILBOXES.training };
+  if (text.includes("webinar") || text.includes("event")) return { label: "Webinars", email: MAILBOXES.webinars };
+  if (text.includes("support") || text.includes("customer success")) return { label: "Support", email: MAILBOXES.support };
+  if (text.includes("partnership") || text.includes("media")) return { label: "Info", email: MAILBOXES.info };
+  return { label: "General Enquiry", email: MAILBOXES.general };
+}
+
 function buildMessage(env, data) {
-  const to = env.EMAIL_TO || "pauljumav@gmail.com";
+  const route = getMailboxRoute(data);
+  const to = env.EMAIL_TO || route.email;
   const from = env.EMAIL_FROM || "contact@lunexao.com";
   const submittedAt = new Date().toISOString();
-  const subject = `New Lunexao Website Enquiry - ${data.subject}`;
+  const subject = `[${route.label}] ${data.subject}`;
   const text = [
     `Name: ${data.name}`,
     `Company: ${data.company}`,
     `Email: ${data.email}`,
     `Phone: ${data.phone || "Not provided"}`,
+    `Routed To: ${to}`,
     `Area of Interest: ${data.interest}`,
     `Subject: ${data.subject}`,
     "",
@@ -46,7 +66,7 @@ function buildMessage(env, data) {
     "",
     `Submitted At: ${submittedAt}`,
   ].join("\n");
-  return { to, from, subject, text, replyTo: data.email };
+  return { to, from, subject, text, replyTo: data.email, route };
 }
 
 async function sendCloudflareEmail(env, data) {
@@ -126,7 +146,9 @@ async function sendFormspree(env, data) {
       _replyto: data.email,
       _subject: message.subject,
       recipient: message.to,
-      submitted_to: env.EMAIL_TO || "pauljumav@gmail.com",
+      submitted_to: message.to,
+      lunexao_mailbox: message.to,
+      department: message.route.label,
       text: message.text,
     }),
   });
@@ -166,6 +188,8 @@ export async function onRequestPost({ request, env }) {
     interest: clean(payload.interest, 80),
     subject: clean(payload.subject, 160),
     message: clean(payload.message, 4000),
+    form_type: clean(payload.form_type, 80),
+    role: clean(payload.role, 160),
   };
 
   const missing = REQUIRED_FIELDS.filter((field) => !data[field]);

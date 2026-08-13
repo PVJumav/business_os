@@ -37,28 +37,33 @@ Then add the custom domains:
 
 The contact form posts directly to Formspree; it does not use `mailto:` and does not expose Gmail credentials in frontend code.
 
-Messages are sent to:
+Messages are labelled for the relevant Lunexao domain mailbox:
 
-- `pauljumav@gmail.com`
+- `contact@lunexao.com` - general website enquiries and demos
+- `info@lunexao.com` - partnerships and general information
+- `careers@lunexao.com` - career applications
+- `training@lunexao.com` - training and academy enquiries
+- `webinars@lunexao.com` - webinar registrations
+- `support@lunexao.com` - support or customer success enquiries
 
 The current production setup uses Formspree:
 
 - Endpoint: `https://formspree.io/f/xaewordo`
-- Destination inbox configured in Formspree: `pauljumav@gmail.com`
+- Destination inbox configured in Formspree/Zoho: Lunexao domain mailboxes above
 
 This works on Cloudflare Pages Free because the browser submits directly to Formspree over HTTPS. The `/api/contact` Pages Function remains in the repo as an optional fallback, but the live form does not depend on Cloudflare Email Sending.
 
 Cloudflare Email Service remains available as a future fallback if you later upgrade to Workers Paid, but it is not configured in `wrangler.toml` because Cloudflare Pages rejects `send_email` bindings during Pages deployment validation.
 
-Optional environment variables:
+Optional fallback environment variables:
 
-- `EMAIL_TO=pauljumav@gmail.com`
+- `EMAIL_TO=contact@lunexao.com`
 - `EMAIL_FROM=contact@lunexao.com`
 - `GMAIL_CLIENT_ID`
 - `GMAIL_CLIENT_SECRET`
 - `GMAIL_REFRESH_TOKEN`
 
-Cloudflare Email Routing can forward domain addresses such as `info@lunexao.com` into `pauljumav@gmail.com`. It does not send website form submissions by itself. The live form now uses Formspree directly. If you later want a private server-side sender, switch the frontend back to `/api/contact` and configure either Cloudflare Email Service or Gmail API.
+Zoho now hosts the Lunexao domain inboxes. The live form uses Formspree directly and includes `lunexao_mailbox`, `department`, and subject labels so messages can be filtered or routed to the correct Zoho address. If you later want a private server-side sender, switch the frontend back to `/api/contact` and configure either Cloudflare Email Service or Gmail API.
 
 ## Spam Protection
 
