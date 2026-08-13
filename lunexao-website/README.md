@@ -26,11 +26,7 @@ Use these settings for the standalone website deployment:
 - Build command: leave empty
 - Build output directory: `.`
 
-This folder includes its own `wrangler.toml`:
-
-```toml
-pages_build_output_dir = "."
-```
+This folder intentionally does not include its own `wrangler.toml`; Cloudflare Pages should use the dashboard build settings above.
 
 Then add the custom domains:
 
