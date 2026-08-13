@@ -31,7 +31,7 @@ const trainingCategories = [
   { title: "IT Governance", summary: "Strengthen policy, access control, audit evidence, technology ownership and compliance reporting." },
   { title: "Business Applications", summary: "Equip users to work confidently inside the systems that run sales, HR, finance and delivery." },
 ];
-const contactEndpoint = "https://formspree.io/f/xaewordo";
+const contactEndpoint = "https://lunexao-api.onrender.com/api/public/contact";
 const whatsappNumber = "254728775106";
 const lunexaoMailboxes = {
   general: "contact@lunexao.com",

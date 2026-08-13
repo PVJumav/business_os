@@ -15,7 +15,6 @@ This folder is separate from the Business OS application frontend. Deploy it as 
 - `/insights/` - Lunexao Insights listing with search and category filters
 - `/careers/` - Open positions and recruitment
 - `/contact/` - Secure contact form
-- `/api/contact` - optional Cloudflare Pages Function fallback for contact form email delivery
 
 ## Cloudflare Pages Settings
 
@@ -35,7 +34,7 @@ Then add the custom domains:
 
 ## Contact Form Email
 
-The contact form posts directly to Formspree; it does not use `mailto:` and does not expose Gmail credentials in frontend code.
+The contact form posts to the Business OS backend public endpoint and the backend sends email through Zoho SMTP. Zoho credentials are stored only in the backend hosting environment, never in browser code.
 
 Messages are labelled for the relevant Lunexao domain mailbox:
 
@@ -46,24 +45,21 @@ Messages are labelled for the relevant Lunexao domain mailbox:
 - `webinars@lunexao.com` - webinar registrations
 - `support@lunexao.com` - support or customer success enquiries
 
-The current production setup uses Formspree:
+The current production endpoint is:
 
-- Endpoint: `https://formspree.io/f/xaewordo`
-- Destination inbox configured in Formspree/Zoho: Lunexao domain mailboxes above
+- Endpoint: `https://lunexao-api.onrender.com/api/public/contact`
 
-This works on Cloudflare Pages Free because the browser submits directly to Formspree over HTTPS. The `/api/contact` Pages Function remains in the repo as an optional fallback, but the live form does not depend on Cloudflare Email Sending.
+Add these environment variables to the Render backend service:
 
-Cloudflare Email Service remains available as a future fallback if you later upgrade to Workers Paid, but it is not configured in `wrangler.toml` because Cloudflare Pages rejects `send_email` bindings during Pages deployment validation.
+- `ZOHO_SMTP_HOST=smtp.zoho.com`
+- `ZOHO_SMTP_PORT=465`
+- `ZOHO_SMTP_USER=contact@lunexao.com`
+- `ZOHO_SMTP_PASSWORD=<Zoho app password or mailbox password>`
+- `CONTACT_FROM_EMAIL=contact@lunexao.com`
 
-Optional fallback environment variables:
+The backend routes submissions to a fixed allowlist of Lunexao mailboxes. It does not trust a browser-submitted recipient value, so the endpoint cannot be used as an arbitrary-recipient mail relay.
 
-- `EMAIL_TO=contact@lunexao.com`
-- `EMAIL_FROM=contact@lunexao.com`
-- `GMAIL_CLIENT_ID`
-- `GMAIL_CLIENT_SECRET`
-- `GMAIL_REFRESH_TOKEN`
-
-Zoho now hosts the Lunexao domain inboxes. The live form uses Formspree directly and includes `lunexao_mailbox`, `department`, and subject labels so messages can be filtered or routed to the correct Zoho address. If you later want a private server-side sender, switch the frontend back to `/api/contact` and configure either Cloudflare Email Service or Gmail API.
+The live form does not use Formspree or Cloudflare Email Sending.
 
 ## Spam Protection
 
@@ -77,14 +73,4 @@ The form includes:
 
 ## Local Testing
 
-Static pages can be opened directly in a browser. To test the Cloudflare Pages Function locally, use Wrangler from this folder:
-
-```bash
-npx wrangler pages dev .
-```
-
-Then open:
-
-```text
-http://localhost:8788/contact/
-```
+Static pages can be opened directly in a browser. To test form delivery, run the Business OS backend with the Zoho SMTP environment variables configured, then submit the contact form.

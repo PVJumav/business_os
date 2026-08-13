@@ -19,6 +19,7 @@ from backend.api.finance_bucs import router as finance_bucs_router
 from backend.api.finance_enterprise import router as finance_enterprise_router
 from backend.api.reports import router as reports_router
 from backend.api.admin_config import router as admin_config_router
+from backend.api.public_contact import router as public_contact_router
 from backend.api.ai import router as ai_router
 from backend.api.automation import router as automation_enterprise_router
 from backend.api.enterprise import router as enterprise_router
@@ -85,7 +86,7 @@ allowed_origins = [
     origin.strip()
     for origin in os.getenv(
         "CORS_ORIGINS",
-        "http://localhost:3000,http://127.0.0.1:3000,https://business-os-edf.pages.dev",
+        "http://localhost:3000,http://127.0.0.1:3000,https://business-os-edf.pages.dev,https://lunexao.com,https://www.lunexao.com",
     ).split(",")
     if origin.strip()
 ]
@@ -129,6 +130,8 @@ PUBLIC_PREFIXES = (
     "/auth",
     "/api/health",
     "/health",
+    "/api/public",
+    "/public",
     "/uploads",
     "/docs",
     "/openapi.json",
@@ -214,6 +217,7 @@ frontend_routers = [
 ]
 
 app.include_router(auth_router, prefix="/api")
+app.include_router(public_contact_router, prefix="/api")
 app.include_router(analytics_router)
 app.include_router(analytics_router, prefix="/api")
 
