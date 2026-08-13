@@ -52,13 +52,7 @@ The current production setup uses Formspree:
 
 This works on Cloudflare Pages Free because the browser submits directly to Formspree over HTTPS. The `/api/contact` Pages Function remains in the repo as an optional fallback, but the live form does not depend on Cloudflare Email Sending.
 
-Cloudflare Email Service remains available as a fallback if you later upgrade to Workers Paid:
-
-- `[[send_email]]` binding name: `EMAIL`
-- Destination address: `pauljumav@gmail.com`
-- Sender default: `contact@lunexao.com`
-
-`wrangler.toml` already includes the `EMAIL` send binding, but Cloudflare Email Sending requires Workers Paid.
+Cloudflare Email Service remains available as a future fallback if you later upgrade to Workers Paid, but it is not configured in `wrangler.toml` because Cloudflare Pages rejects `send_email` bindings during Pages deployment validation.
 
 Optional environment variables:
 
